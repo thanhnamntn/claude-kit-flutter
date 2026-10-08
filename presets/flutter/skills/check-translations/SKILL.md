@@ -1,52 +1,52 @@
 ---
 name: check-translations
-description: Kiểm tra toàn bộ translation (easy_localization) của project — key thiếu giữa en/vi, key dùng trong code nhưng chưa định nghĩa, key thừa, placeholder lệch, text hard-code chưa dịch. Dùng khi thêm/sửa chuỗi hiển thị, trước khi tạo PR, hoặc khi tôi nói "check translate/i18n/dịch".
-argument-hint: "[--fix | để trống = chỉ báo cáo]"
+description: Check all of the project's translations (easy_localization) — keys missing between en/vi, keys used in code but not defined, unused keys, mismatched placeholders, untranslated hard-coded text. Use when adding/editing display strings, before creating a PR, or when the user says "check translate/i18n/translations".
+argument-hint: "[--fix | empty = report only]"
 ---
 
 # Check translations
 
-Translation nằm ở `assets/translations/{en,vi}.json`; code dùng `'a.b.c'.tr()` (`easy_localization`). Quy ước: mọi chuỗi hiển thị đều qua `.tr()` và có key ở **mọi** ngôn ngữ hỗ trợ.
+Translations live in `assets/translations/{en,vi}.json`; code uses `'a.b.c'.tr()` (`easy_localization`). Convention: every display string goes through `.tr()` and has a key in **every** supported language.
 
-## 1. Chạy kiểm tra
+## 1. Run the check
 
 ```bash
 python3 .claude/skills/check-translations/scripts/check_translations.py --hardcoded
 ```
 
-Script (không sửa file) báo 5 nhóm:
+The script (does not modify files) reports 5 groups:
 
-1. Key thiếu giữa các ngôn ngữ (có ở `en` mà không có ở `vi`, hoặc ngược lại).
-2. Key dùng trong code (`'x.y'.tr(`, `tr('x.y'`, string literal truyền như `'questionKey': 'x.y'`) nhưng chưa định nghĩa.
-3. Key định nghĩa nhưng không thấy dùng. Key ghép động (`'prefix.$var'`) được bỏ qua theo prefix; **luôn kiểm tra tay trước khi xóa** vì key có thể được dựng bằng cách khác.
-4. Giá trị rỗng, hoặc placeholder (`{}`, `{name}`) lệch giữa các ngôn ngữ.
-5. (`--hardcoded`) Text hard-code trong `Text('...')`, `label:`, `hint:`, `title:`... chưa dịch — chỉ là ứng viên.
+1. Keys missing between languages (present in `en` but not in `vi`, or vice versa).
+2. Keys used in code (`'x.y'.tr(`, `tr('x.y'`, string literals passed like `'questionKey': 'x.y'`) but not defined.
+3. Keys defined but not seen in use. Dynamically built keys (`'prefix.$var'`) are skipped by prefix; **always verify manually before deleting** since a key may be built another way.
+4. Empty values, or placeholders (`{}`, `{name}`) that differ between languages.
+5. (`--hardcoded`) Hard-coded text in `Text('...')`, `label:`, `hint:`, `title:`... that is untranslated — candidates only.
 
-Exit code `1` khi có lỗi ở nhóm 1, 2 hoặc 4.
+Exit code `1` when there are errors in group 1, 2 or 4.
 
-## 2. Phân loại kết quả
+## 2. Classify the results
 
-- **Phải sửa** (nhóm 1, 2, 4): thiếu key, key không tồn tại, placeholder lệch.
-- **Nên xem** (nhóm 3): key thừa — đề xuất xóa nhưng không tự xóa.
-- **Cần phán đoán** (nhóm 5): bỏ qua ví dụ placeholder của input (`DD/MM/YYYY`, `hello@example.com`), tên ngôn ngữ ("English", "Tiếng Việt"), tên riêng/brand, định dạng kỹ thuật. Chỉ báo những chuỗi người dùng thật sự đọc.
+- **Must fix** (groups 1, 2, 4): missing keys, nonexistent keys, mismatched placeholders.
+- **Worth a look** (group 3): unused keys — propose deletion but do not delete on your own.
+- **Needs judgment** (group 5): ignore input placeholder examples (`DD/MM/YYYY`, `hello@example.com`), language names ("English", "Tiếng Việt"), proper nouns/brands, technical formats. Only report strings users actually read.
 
-## 3. Báo cáo
+## 3. Report
 
-Trình bày ngắn gọn:
-- Lỗi phải sửa: `key` — vấn đề — `file:line` (nếu có).
-- Đề xuất bản dịch cho key thiếu (EN ↔ VI), đúng giọng văn các key gần đó.
-- Số key thừa và nhóm lớn nhất (theo namespace) để tôi quyết định dọn.
-- Hard-code đáng dịch kèm key đề xuất theo namespace của màn hình.
+Present concisely:
+- Must-fix errors: `key` — issue — `file:line` (if available).
+- Suggested translations for missing keys (EN ↔ VI), matching the tone of nearby keys.
+- The number of unused keys and the largest groups (by namespace) so the user can decide on cleanup.
+- Hard-coded strings worth translating, with suggested keys under the screen's namespace.
 
-## 4. Sửa (chỉ khi tôi yêu cầu hoặc gọi với `--fix`)
+## 4. Fix (only when the user asks or it is called with `--fix`)
 
-- Thêm key vào **cả hai** file, giữ cấu trúc lồng nhau và thứ tự gần key liên quan; giữ indent 4 spaces như file hiện có.
-- Hard-code → thay bằng `'<namespace>.<key>'.tr()` (dùng `args:` cho giá trị động), không đổi layout.
-- Không xóa key thừa nếu chưa được xác nhận.
-- Chạy lại script, đảm bảo nhóm 1, 2, 4 sạch; rồi `dart format .` và `flutter analyze`.
+- Add keys to **both** files, keeping the nested structure and placing them near related keys; keep the 4-space indent used by the existing files.
+- Hard-coded text → replace with `'<namespace>.<key>'.tr()` (use `args:` for dynamic values), without changing the layout.
+- Do not delete unused keys without confirmation.
+- Re-run the script and make sure groups 1, 2, 4 are clean; then `dart format .` and `flutter analyze`.
 
-## Lưu ý
+## Notes
 
-- Key được chia sẻ giữa nhiều màn hình thì để ở `common.*`.
-- Đừng ghép chuỗi bằng `+`; dùng placeholder trong bản dịch để dịch được thứ tự từ.
-- Script chỉ đọc `lib/` và `assets/translations/`; chạy từ thư mục gốc project.
+- Keys shared across many screens go under `common.*`.
+- Do not concatenate strings with `+`; use placeholders in the translation so word order can be translated.
+- The script only reads `lib/` and `assets/translations/`; run it from the project root.

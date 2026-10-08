@@ -6,32 +6,32 @@ paths:
 
 # Data layer & providers rules
 
-- Mapper: constructor private `._()`, chỉ static method `toEntity(model)`. Mapping Model → Entity xảy ra trong `RepositoryImpl`.
-- RepositoryImpl: field inject tên `remoteDataSource`; `try/catch` → `Right(...)` / `Left(ServerFailure(e.toString()))`; void dùng `Right(null)`.
-- Stream không dùng try/catch: `.map(Right)` + `.transform(StreamTransformer.fromHandlers(...))` (cần `import 'dart:async'`).
-- DataSource interface nằm ở `data/datasources/` cùng impl (trả Model); domain không biết Model. Chuỗi BE của enum (`toGraphQL`/`fromGraphQL`) đặt ở `data/mappers/enum_graphql_mapper.dart`.
-- DataSource impl chỉ gọi API (GraphQL/HTTP), không chứa business logic. Local/mock datasource không bị xóa.
-- Provider chain: `dataSource → repository → useCase → notifier`. Mỗi provider một file, đặt theo layout của project (xem `STRUCTURE.md`/`CLAUDE.md`); nếu có barrel `index.dart` thì phải export provider mới.
-- Thứ tự method trong class: list → batchGet → get → create → update → delete → domain-specific.
-- Named params: `required` đứng trước optional.
+- Mapper: private constructor `._()`, static `toEntity(model)` methods only. Model → Entity mapping happens in `RepositoryImpl`.
+- RepositoryImpl: the injected field is named `remoteDataSource`; `try/catch` → `Right(...)` / `Left(ServerFailure(e.toString()))`; void uses `Right(null)`.
+- Streams do not use try/catch: `.map(Right)` + `.transform(StreamTransformer.fromHandlers(...))` (needs `import 'dart:async'`).
+- The DataSource interface lives in `data/datasources/` next to its impl (returns Model); the domain does not know Models. BE strings of enums (`toGraphQL`/`fromGraphQL`) live in `data/mappers/enum_graphql_mapper.dart`.
+- A DataSource impl only calls the API (GraphQL/HTTP) and contains no business logic. Local/mock datasources are not deleted.
+- Provider chain: `dataSource → repository → useCase → notifier`. One provider per file, placed per the project's layout (see `STRUCTURE.md`/`CLAUDE.md`); if a barrel `index.dart` exists, new providers must be exported from it.
+- Method order within a class: list → batchGet → get → create → update → delete → domain-specific.
+- Named params: `required` before optional.
 
 ## Naming
 
-| Verb | Khi nào | Ví dụ |
+| Verb | When | Example |
 |---|---|---|
-| `list` | Lấy nhiều item | `listBeverages()` |
-| `get` | Lấy 1 item theo ID | `getTransaction(id)` |
-| `batchGet` | Lấy nhiều item theo danh sách ID | `batchGetCombos(ids)` |
+| `list` | Fetch many items | `listBeverages()` |
+| `get` | Fetch one item by ID | `getTransaction(id)` |
+| `batchGet` | Fetch many items by a list of IDs | `batchGetCombos(ids)` |
 | `create` / `update` / `delete` | CRUD | `createTransaction()` |
-| `cancel` / `complete` | Đổi trạng thái domain | `cancelTransaction()` |
+| `cancel` / `complete` | Change domain state | `cancelTransaction()` |
 
-- File: `snake_case.dart`; interface `xxx.dart` + implementation `xxx_impl.dart`.
-- DataSource impl đặt tên theo nguồn dữ liệu: `xxx_datasource_impl.dart` (nguồn thật), `xxx_mock_datasource_impl.dart` (mock), `xxx_hardcoded_datasource_impl.dart` (dữ liệu hardcode trong app); không dùng tên chung `_local_`.
-- Barrel file luôn tên `index.dart`.
+- Files: `snake_case.dart`; interface `xxx.dart` + implementation `xxx_impl.dart`.
+- DataSource impls are named after the data source: `xxx_datasource_impl.dart` (real source), `xxx_mock_datasource_impl.dart` (mock), `xxx_hardcoded_datasource_impl.dart` (data hardcoded in the app); do not use the generic name `_local_`.
+- Barrel files are always named `index.dart`.
 
-## Stream trong Repository
+## Streams in a Repository
 
-Stream không dùng được try/catch — bọc lỗi bằng `StreamTransformer.fromHandlers`:
+Streams cannot use try/catch — wrap errors with `StreamTransformer.fromHandlers`:
 
 ```dart
 return remoteDataSource

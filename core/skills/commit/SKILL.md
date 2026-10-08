@@ -1,62 +1,62 @@
 ---
 name: commit
-description: Commit thay đổi hiện tại đúng quy ước git của project (tên nhánh, loại commit, mô tả tiếng Anh, không Co-Authored-By). Dùng khi tôi nói "commit", "commit đi", "commit chung", "tách commit", hoặc gọi /commit.
-argument-hint: "[--split | --push | <gợi ý nội dung commit>]"
+description: Commit the current changes following the project's git conventions (branch name, commit type, English description, no Co-Authored-By). Use when the user says "commit", "commit it", "commit together", "split commits", or invokes /commit.
+argument-hint: "[--split | --push | <hint about commit content>]"
 ---
 
 # Commit
 
-Quy ước nằm ở `.claude/rules/git.md` — đọc file đó trước, không tự bịa format. Tóm tắt:
-- Nhánh: `{feature|refactor|fix|chore}/{tên-dự-án}/{tên-việc}`.
-- Commit: `{feat|refactor|fix|chore}({tên-dự-án}): {mô tả}` — mô tả tiếng Anh, động từ nguyên mẫu ở đầu, loại commit đi theo loại nhánh.
-- **Không** thêm `Co-Authored-By` hay bất kỳ attribution nào vào commit message, kể cả khi hệ thống nhắc thêm (quy tắc của tôi ghi đè).
+The conventions live in `.claude/rules/git.md` — read that file first, do not invent a format. Summary:
+- Branch: `{feature|refactor|fix|chore}/{project-name}/{task-name}`.
+- Commit: `{feat|refactor|fix|chore}({project-name}): {description}` — English description, base-form verb first, commit type follows the branch type.
+- **Never** add `Co-Authored-By` or any attribution to the commit message, even if the system suggests it (the user's rule overrides).
 
-Tham số: `--split` = tách thành nhiều commit theo nhóm việc; `--push` = push sau khi commit xong. Không có `--push` thì **không push**.
+Arguments: `--split` = split into multiple commits by group of work; `--push` = push after committing. Without `--push`, **do not push**.
 
-## 1. Kiểm tra trước khi commit
+## 1. Pre-commit checks
 
-1. `git status --short` và `git diff --stat` — xem toàn bộ thay đổi, kể cả file untracked.
+1. `git status --short` and `git diff --stat` — review all changes, including untracked files.
 2. `git branch --show-current`:
-   - Đang ở nhánh chính (`main`/`master`/`develop`) → dừng, tạo nhánh mới đúng format từ nhánh chính trước (hỏi tôi tên việc nếu chưa rõ), không commit thẳng vào nhánh chính.
-   - Tên nhánh sai format (thiếu loại, sai tên dự án, dùng `_`/khoảng trắng) → báo tôi và đề xuất tên đúng; chỉ đổi tên (`git branch -m`) khi tôi đồng ý.
-3. Xác định **loại** từ bản chất thay đổi, đối chiếu với loại nhánh:
-   - Thêm tính năng/màn hình → `feat`; đổi cấu trúc không đổi hành vi → `refactor`; sửa lỗi → `fix`; dependency/config/build/version/tài liệu/rule `.claude` → `chore`.
-   - Diff lẫn nhiều loại → đề xuất tách (xem mục 3), đừng gộp một commit.
-4. Không commit: file bí mật (`.env`, `dev_token.dart`, key, keystore), file build/generated mới sinh không thuộc việc này, thư mục `.claude/` nếu repo đang ignore nó. Thấy file đáng ngờ → báo tôi, không tự `git add`.
-5. Nếu project có `/check` (format + analyze + test) mà chưa chạy trong phiên này, nhắc tôi hoặc chạy nhanh `dart format` / lint tương ứng trước khi commit. Không tự sửa code ngoài phạm vi commit.
+   - On the main branch (`main`/`master`/`develop`) → stop, first create a new branch in the correct format from the main branch (ask the user for the task name if unclear); never commit directly to the main branch.
+   - Branch name in the wrong format (missing type, wrong project name, uses `_`/spaces) → tell the user and suggest the correct name; only rename (`git branch -m`) when the user agrees.
+3. Determine the **type** from the nature of the change, cross-checking with the branch type:
+   - New feature/screen → `feat`; structure change without behavior change → `refactor`; bug fix → `fix`; dependency/config/build/version/docs/`.claude` rules → `chore`.
+   - Diff mixes several types → propose splitting (see section 3), do not lump into one commit.
+4. Do not commit: secret files (`.env`, `dev_token.dart`, keys, keystores), newly generated build/generated files unrelated to this work, the `.claude/` directory if the repo ignores it. If you see a suspicious file → tell the user, do not `git add` it yourself.
+5. If the project has `/check` (format + analyze + test) and it has not been run in this session, remind the user or quickly run `dart format` / the matching lint before committing. Do not fix code outside the commit's scope.
 
-## 2. Soạn message
+## 2. Write the message
 
-- Một dòng, ≤ 72 ký tự, không dấu chấm cuối: `refactor(<app>): move models and graphql to data layer`.
-- Nêu **việc đã làm** cụ thể (add, move, rename, extract, fix...), không viết chung chung (`update code`, `fix bug`).
-- Diff lớn: thêm body (cách một dòng trống), gạch đầu dòng các thay đổi chính và lý do nếu không hiển nhiên. Body cũng tiếng Anh.
-- Tên dự án lấy từ `git.md`/tên nhánh, không đoán.
+- One line, ≤ 72 characters, no trailing period: `refactor(<app>): move models and graphql to data layer`.
+- State the **specific work done** (add, move, rename, extract, fix...), not something generic (`update code`, `fix bug`).
+- Large diff: add a body (after a blank line), bullet the main changes and the reason if not obvious. The body is also in English.
+- Take the project name from `git.md`/the branch name, do not guess.
 
-## 3. Tách commit (`--split`, hoặc khi diff lẫn nhiều loại/nhiều việc)
+## 3. Split commits (`--split`, or when the diff mixes types/tasks)
 
-Nhóm theo ý nghĩa, mỗi nhóm một commit, thứ tự để từng commit đều biên dịch được khi có thể:
-1. Di chuyển/đổi tên file (dùng `git mv` để giữ lịch sử) cùng sửa import đi kèm.
-2. Thay đổi logic/cấu trúc theo tầng (domain → data → features).
-3. Tài liệu, rule `.claude`, config (`chore`).
+Group by meaning, one commit per group, ordered so each commit compiles when possible:
+1. File moves/renames (use `git mv` to keep history) together with the accompanying import fixes.
+2. Logic/structure changes by layer (domain → data → features).
+3. Docs, `.claude` rules, config (`chore`).
 
-Trình bày danh sách nhóm + message dự kiến cho tôi duyệt trước khi chạy `git add`/`git commit`.
+Present the list of groups + planned messages to the user for approval before running `git add`/`git commit`.
 
-## 4. Thực hiện
+## 4. Execute
 
-1. `git add` theo **đường dẫn cụ thể** (không `git add -A`/`.` khi có file không thuộc commit).
-2. Commit bằng heredoc để giữ xuống dòng:
+1. `git add` by **specific path** (not `git add -A`/`.` when files outside the commit are present).
+2. Commit with a heredoc to preserve line breaks:
    ```bash
    git commit -m "$(cat <<'EOF'
    <type>(<project>): <description>
 
-   <body nếu cần>
+   <body if needed>
    EOF
    )"
    ```
-   Không `--no-verify`, không `--amend` commit đã có trừ khi tôi yêu cầu. Hook fail → sửa nguyên nhân rồi commit **mới**, không bỏ qua hook.
-3. `git status` sau cùng để chắc không còn file sót, rồi `git log --oneline -n <số commit vừa tạo>`.
-4. `--push`: `git push` (nhánh mới thì `git push -u origin <nhánh>`). Không force-push; nếu bị từ chối vì remote đi trước → báo tôi, đừng tự rebase/force.
+   No `--no-verify`, no `--amend` of existing commits unless the user asks. If a hook fails → fix the cause and make a **new** commit, do not skip the hook.
+3. Finally run `git status` to make sure no files are left over, then `git log --oneline -n <number of commits just created>`.
+4. `--push`: `git push` (for a new branch `git push -u origin <branch>`). No force-push; if rejected because the remote is ahead → tell the user, do not rebase/force on your own.
 
-## 5. Báo cáo
+## 5. Report
 
-Liệt kê: nhánh, các commit đã tạo (hash ngắn + message), file chưa commit và lý do, đã push hay chưa. Không tạo PR trừ khi tôi yêu cầu (nếu cần thì đề xuất link/lệnh `gh pr create` với title theo format commit).
+List: branch, commits created (short hash + message), files not committed and why, whether pushed. Do not create a PR unless asked (if needed, suggest the link/`gh pr create` command with a title in the commit format).

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Kiểm tra translation của project Flutter (easy_localization).
+"""Check the translations of a Flutter project (easy_localization).
 
-Usage (từ thư mục gốc project):
+Usage (from the project root):
   python3 .claude/skills/check-translations/scripts/check_translations.py [--hardcoded]
 
-Kiểm tra:
-  1. Key có ở ngôn ngữ này nhưng thiếu ở ngôn ngữ kia.
-  2. Key dùng trong code (`'a.b'.tr(`, `tr('a.b'`, `plural('a.b'`) nhưng không tồn tại.
-  3. Key định nghĩa nhưng không được dùng (bỏ qua key có thể được ghép động).
-  4. Giá trị rỗng, và placeholder `{}` / `{name}` không khớp giữa các ngôn ngữ.
-  5. (--hardcoded) Text hiển thị hard-code trong Text('...') / label / hint... chưa dịch.
-Exit code 1 nếu có lỗi mức 1, 2 hoặc 4.
+Checks:
+  1. Keys present in one language but missing in another.
+  2. Keys used in code (`'a.b'.tr(`, `tr('a.b'`, `plural('a.b'`) that do not exist.
+  3. Keys defined but unused (keys that may be built dynamically are skipped).
+  4. Empty values, and `{}` / `{name}` placeholders that differ between languages.
+  5. (--hardcoded) Hard-coded display text in Text('...') / label / hint... that is untranslated.
+Exit code 1 if there are errors at level 1, 2 or 4.
 """
 import argparse
 import json
@@ -58,26 +58,26 @@ def main():
 
     files = sorted(TRANS_DIR.glob('*.json'))
     if len(files) < 2:
-        print(f'Không tìm thấy >= 2 file translation trong {TRANS_DIR}')
+        print(f'Fewer than 2 translation files found in {TRANS_DIR}')
         return 1
     langs = {f.stem: flatten(json.loads(f.read_text(encoding='utf-8'))) for f in files}
     names = list(langs)
     errors = 0
 
-    # 1. thiếu key giữa các ngôn ngữ
-    print('== 1. Key thiếu giữa các ngôn ngữ ==')
+    # 1. keys missing between languages
+    print('== 1. Keys missing between languages ==')
     all_keys = set().union(*[set(v) for v in langs.values()])
     for lang, keys in langs.items():
         missing = sorted(all_keys - set(keys))
         if missing:
             errors += len(missing)
-            print(f'  [{lang}] thiếu {len(missing)} key:')
+            print(f'  [{lang}] missing {len(missing)} keys:')
             for k in missing:
                 print(f'    - {k}')
     if all(not (all_keys - set(k)) for k in langs.values()):
         print('  OK')
 
-    # 2/3. key dùng trong code
+    # 2/3. keys used in code
     used = {}
     literals = {}
     dynamic_prefixes = set()
@@ -94,17 +94,17 @@ def main():
             dynamic_prefixes.add(m.group(1))
 
     defined_all = set().union(*[set(v) for v in langs.values()])
-    print('\n== 2. Key dùng trong code nhưng chưa định nghĩa ==')
+    print('\n== 2. Keys used in code but not defined ==')
     undefined = {k: v for k, v in used.items() if any(k not in langs[l] for l in names)}
     if undefined:
         for k, locs in sorted(undefined.items()):
             miss = [l for l in names if k not in langs[l]]
             errors += 1
-            print(f'  {k}  (thiếu ở: {", ".join(miss)})  {locs[0]}')
+            print(f'  {k}  (missing in: {", ".join(miss)})  {locs[0]}')
     else:
         print('  OK')
 
-    # key truyền dưới dạng string literal (vd 'questionKey': 'chat_ai.x') nhưng chưa định nghĩa
+    # keys passed as string literals (e.g. 'questionKey': 'chat_ai.x') but not defined
     namespaces = {k.split('.')[0] for k in defined_all}
     maybe = {
         k: v for k, v in literals.items()
@@ -113,11 +113,11 @@ def main():
         and any(k not in langs[l] for l in names)
     }
     if maybe:
-        print('  Có thể thiếu (string literal trùng namespace nhưng không có key):')
+        print('  Possibly missing (string literal matches a namespace but has no key):')
         for k, locs in sorted(maybe.items()):
             print(f'    {k}  {locs[0]}')
 
-    print('\n== 3. Key định nghĩa nhưng không dùng (cân nhắc xóa) ==')
+    print('\n== 3. Keys defined but unused (consider removing) ==')
     defined = set().union(*[set(v) for v in langs.values()])
     unused = sorted(
         k for k in defined
@@ -129,27 +129,27 @@ def main():
     if not unused:
         print('  OK')
     else:
-        print(f'  ({len(unused)} key; key ghép động theo prefix {sorted(dynamic_prefixes) or "[]"} đã được bỏ qua)')
+        print(f'  ({len(unused)} keys; dynamically built keys with prefixes {sorted(dynamic_prefixes) or "[]"} were skipped)')
 
-    # 4. rỗng / placeholder
-    print('\n== 4. Giá trị rỗng / placeholder không khớp ==')
+    # 4. empty / placeholder
+    print('\n== 4. Empty values / mismatched placeholders ==')
     bad = 0
     for k in sorted(all_keys):
         vals = {l: langs[l].get(k) for l in names if k in langs[l]}
         for l, v in vals.items():
             if isinstance(v, str) and not v.strip():
                 bad += 1
-                print(f'  [{l}] rỗng: {k}')
+                print(f'  [{l}] empty: {k}')
         ph = {l: sorted(PLACEHOLDER.findall(v)) for l, v in vals.items() if isinstance(v, str)}
         if len({tuple(p) for p in ph.values()}) > 1:
             bad += 1
-            print(f'  placeholder lệch: {k}  {ph}')
+            print(f'  placeholder mismatch: {k}  {ph}')
     errors += bad
     if not bad:
         print('  OK')
 
     if args.hardcoded:
-        print('\n== 5. Text hard-code chưa dịch (ứng viên, cần xem tay) ==')
+        print('\n== 5. Hard-coded untranslated text (candidates, review manually) ==')
         n = 0
         for f in dart_files():
             rel = f.relative_to(ROOT)
@@ -163,9 +163,9 @@ def main():
                 if m:
                     n += 1
                     print(f'  {rel}:{i}  "{m.group(1)}"')
-        print(f'  ({n} ứng viên)' if n else '  OK')
+        print(f'  ({n} candidates)' if n else '  OK')
 
-    print(f'\nTổng lỗi mức 1/2/4: {errors}')
+    print(f'\nTotal errors at level 1/2/4: {errors}')
     return 1 if errors else 0
 
 

@@ -1,40 +1,40 @@
 # Git branch & commit rules
 
-Rule không có `paths:` nên luôn được nạp.
+This rule has no `paths:`, so it is always loaded.
 
-## Tên nhánh
+## Branch names
 
 ```
-{loại}/{tên-dự-án}/{tên-việc}
+{type}/{project-name}/{task-name}
 ```
 
-| Loại | Dùng khi | Ví dụ |
+| Type | Use when | Example |
 |---|---|---|
-| `feature` | Thêm tính năng/màn hình mới | `feature/my-app/build-ui-member` |
-| `refactor` | Đổi cấu trúc code, không đổi hành vi | `refactor/my-app/move-data-domain-out-of-core` |
-| `fix` | Sửa lỗi | `fix/my-app/payment-webview-polling` |
-| `chore` | Việc vặt không đổi code chạy: cập nhật dependency, config, build/version, tài liệu, rule `.claude` | `chore/my-app/update-build-version` |
+| `feature` | Adding a new feature/screen | `feature/my-app/build-ui-member` |
+| `refactor` | Changing code structure without changing behavior | `refactor/my-app/move-data-domain-out-of-core` |
+| `fix` | Fixing a bug | `fix/my-app/payment-webview-polling` |
+| `chore` | Chores that do not change runtime code: dependency updates, config, build/version, docs, `.claude` rules | `chore/my-app/update-build-version` |
 
-- `{tên-dự-án}`: tên dự án, chữ thường, nối bằng `-` (lấy theo tên repo/package).
-- `{tên-việc}`: mô tả việc đang làm, chữ thường, các từ nối bằng `-`, không dấu, không khoảng trắng hay `_`.
-- Chọn loại theo bản chất công việc; mỗi nhánh chỉ một loại. Việc vừa fix vừa refactor (hoặc lẫn chore) thì tách thành các nhánh/commit riêng.
-- Khi tạo nhánh mới luôn đặt tên theo format trên.
-- Nhánh mới **luôn tạo từ `main`**, và trước đó phải cập nhật `main`: `git checkout main` → `git pull --rebase origin main` → rồi mới `git checkout -b <nhánh>`. Không tạo nhánh từ một nhánh làm việc khác (trừ khi tôi chỉ định rõ). Có thay đổi dở thì dừng và báo tôi, không stash tự ý.
+- `{project-name}`: the project name, lowercase, joined with `-` (taken from the repo/package name).
+- `{task-name}`: describes the work, lowercase, words joined with `-`, no accents, no spaces or `_`.
+- Pick the type by the nature of the work; one type per branch. Work that mixes fix and refactor (or chore) must be split into separate branches/commits.
+- Always name new branches with the format above.
+- New branches are **always created from `main`**, which must be updated first: `git checkout main` → `git pull --rebase origin main` → only then `git checkout -b <branch>`. Never create a branch from another working branch (unless the user explicitly says so). If there are uncommitted changes, stop and tell the user; do not stash on your own.
 
 ## Commit message
 
 ```
-{loại}({tên-dự-án}): {công việc liên quan tới commit}
+{type}({project-name}): {work related to the commit}
 ```
 
-| Loại | Dùng khi | Ví dụ |
+| Type | Use when | Example |
 |---|---|---|
-| `feat` | Tính năng mới | `feat(my-app): add member profile page` |
-| `refactor` | Đổi cấu trúc, không đổi hành vi | `refactor(my-app): move beverage logic to notifiers` |
-| `fix` | Sửa lỗi | `fix(my-app): stop polling after payment completed` |
-| `chore` | Dependency, config, build/version, tài liệu, rule `.claude` | `chore(my-app): bump version to 1.0.2+3` |
+| `feat` | New feature | `feat(my-app): add member profile page` |
+| `refactor` | Structure change, no behavior change | `refactor(my-app): move beverage logic to notifiers` |
+| `fix` | Bug fix | `fix(my-app): stop polling after payment completed` |
+| `chore` | Dependency, config, build/version, docs, `.claude` rules | `chore(my-app): bump version to 1.0.2+3` |
 
-- Loại commit đi theo loại nhánh: nhánh `feature` → `feat`, nhánh `refactor` → `refactor`, nhánh `fix` → `fix`, nhánh `chore` → `chore`.
-- `{tên-dự-án}` giống phần tên dự án trong tên nhánh.
-- Phần mô tả: tiếng Anh, ngắn gọn, động từ nguyên mẫu ở đầu (add, update, move, fix...), nêu việc cụ thể của commit đó.
-- Không thêm dòng `Co-Authored-By` (hay bất kỳ attribution nào) vào commit message.
+- The commit type follows the branch type: `feature` branch → `feat`, `refactor` branch → `refactor`, `fix` branch → `fix`, `chore` branch → `chore`.
+- `{project-name}` is the same as the project name in the branch name.
+- Description: English, concise, starting with a base-form verb (add, update, move, fix...), stating the specific work of that commit.
+- Do not add a `Co-Authored-By` line (or any attribution) to commit messages.
