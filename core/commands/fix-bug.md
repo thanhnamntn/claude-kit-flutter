@@ -1,39 +1,39 @@
 ---
-description: Fix bug theo workflow plan → test tái hiện → code → test → review (tối đa 2 vòng sửa)
-argument-hint: "<mô tả bug / file / bước tái hiện>"
+description: Fix a bug via plan → reproducing test → code → test → review (max 2 fix rounds)
+argument-hint: "<bug description / file / repro steps>"
 ---
 
-Bug cần fix: `$ARGUMENTS`
+Bug to fix: `$ARGUMENTS`
 
-Nếu mô tả quá mơ hồ để xác định chỗ nghi vấn, hỏi lại một lần rồi mới bắt đầu.
+If the description is too vague to locate the suspect area, ask once before starting.
 
-Dùng các subagent `plan`, `code`, `test`, `review` (`.claude/agents/`) theo thứ tự dưới đây. Chỉ `code` được sửa source. Mỗi agent kết thúc bằng `AGENT_STATUS`; dựa vào đó để quyết định bước tiếp theo.
+Use the subagents `plan`, `code`, `test`, `review` (`.claude/agents/`) in the order below. Only `code` may edit source. Each agent ends with `AGENT_STATUS`; use it to decide the next step.
 
-## 1. Plan — tìm nguyên nhân gốc
-Giao `plan`: xác định nguyên nhân gốc (không chỉ triệu chứng), tầng nào gây lỗi (UI/notifier/usecase/repository/datasource/mapper/BE schema), hướng sửa tối thiểu, và test nào sẽ tái hiện bug.
+## 1. Plan — find the root cause
+Ask `plan` to identify the root cause (not just the symptom), which layer causes the bug (UI/notifier/usecase/repository/datasource/mapper/BE schema), the minimal fix, and which test would reproduce the bug.
 
-Nếu `NEEDS_ORCHESTRATOR` (thiếu thông tin, cần quyết định) → dừng và hỏi tôi.
+If `NEEDS_ORCHESTRATOR` (missing information, a decision is needed) → stop and ask the user.
 
-## 2. Test tái hiện (trước khi sửa)
-Giao `code` viết test nhỏ nhất tái hiện bug theo quy ước test của project (`.claude/rules/`), rồi giao `test` chạy để xác nhận **test fail đúng lý do**. Nếu bug thuần UI/không test được hợp lý, bỏ qua bước này và nói rõ lý do.
+## 2. Reproducing test (before fixing)
+Ask `code` to write the smallest test that reproduces the bug following the project's test conventions (`.claude/rules/`), then ask `test` to run it and confirm the **test fails for the right reason**. If the bug is purely UI / cannot reasonably be tested, skip this step and say why.
 
-## 3. Code — sửa bug
-Giao `code` sửa theo kế hoạch của `plan`: thay đổi tối thiểu, không refactor lan rộng, không thêm tính năng.
+## 3. Code — fix the bug
+Ask `code` to fix it per `plan`'s plan: minimal change, no sprawling refactor, no new features.
 
 ## 4. Test
-Giao `test`: test tái hiện phải pass, rồi lint và chạy toàn bộ test (lệnh trong mục Commands của `CLAUDE.md`).
+Ask `test`: the reproducing test must pass, then lint and run the full test suite (commands in the Commands section of `CLAUDE.md`).
 
 ## 5. Review
-Giao `review` rà diff. Với bug chạm vùng nhạy cảm (thanh toán, auth, dữ liệu người dùng), yêu cầu kiểm tra kỹ hơn.
+Ask `review` to go over the diff. For bugs touching sensitive areas (payment, auth, user data), request a closer check.
 
-## Vòng lặp
-- `FAIL` ở bước 4 hoặc 5 → quay lại `code` với danh sách lỗi cụ thể, rồi chạy lại `test` + `review`.
-- Tối đa **2 vòng** quay lại `code`. Quá giới hạn → dừng và báo tôi phần còn lại.
+## Loop
+- `FAIL` at step 4 or 5 → go back to `code` with a concrete list of errors, then re-run `test` + `review`.
+- At most **2 rounds** back to `code`. Beyond that → stop and report the remainder to the user.
 
-## Báo cáo cuối
-- Nguyên nhân gốc (1–2 câu) và vì sao fix đúng chỗ.
-- File đã đổi + test đã thêm.
-- Kết quả `analyze`/`test`; nêu rõ nếu có bước bị bỏ qua.
-- Rủi ro còn lại hoặc chỗ cần tôi kiểm tra tay (ví dụ chạy app).
+## Final report
+- Root cause (1–2 sentences) and why the fix is in the right place.
+- Files changed + tests added.
+- `analyze`/`test` results; state clearly if any step was skipped.
+- Remaining risks or things the user should check manually (e.g. run the app).
 
-Không commit; chỉ commit khi tôi yêu cầu.
+Do not commit; only commit when the user asks.

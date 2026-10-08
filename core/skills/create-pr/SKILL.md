@@ -1,78 +1,78 @@
 ---
 name: create-pr
-description: Tạo Pull Request vào main. Luôn cập nhật main (pull --rebase), rồi quay lại nhánh đang làm và rebase lên main trước khi push và mở PR. Dùng khi tôi nói "tạo PR", "mở PR", "đẩy lên review", hoặc gọi /create-pr.
-argument-hint: "[--draft | <ghi chú cho mô tả PR>]"
+description: Create a Pull Request into main. Always update main (pull --rebase), then return to the working branch and rebase it onto main before pushing and opening the PR. Use when the user says "create PR", "open PR", "push for review", or invokes /create-pr.
+argument-hint: "[--draft | <notes for the PR description>]"
 ---
 
 # Create PR
 
-Quy ước nhánh/commit ở `.claude/rules/git.md`. Nhánh đích **luôn là `main`** (nếu repo dùng tên khác thì lấy từ `git symbolic-ref --short refs/remotes/origin/HEAD`, bỏ `origin/`). `--draft` = mở PR ở dạng draft.
+Branch/commit conventions are in `.claude/rules/git.md`. The target branch is **always `main`** (if the repo uses another name, get it from `git symbolic-ref --short refs/remotes/origin/HEAD`, dropping `origin/`). `--draft` = open the PR as a draft.
 
-Thứ tự bắt buộc — **không được bỏ bước 2–4 dù nhánh trông đã mới**: về main → pull --rebase → về nhánh làm việc → rebase lên main → mới push/tạo PR.
+Mandatory order — **steps 2–4 must not be skipped even if the branch looks up to date**: go to main → pull --rebase → return to the working branch → rebase onto main → only then push/create the PR.
 
-## 1. Chuẩn bị
+## 1. Prepare
 
-1. `git branch --show-current` → ghi nhớ làm `<branch>`. Đang ở `main`/`master` → dừng, không tạo PR từ nhánh chính.
-2. Tên nhánh phải đúng `{feature|refactor|fix|chore}/{tên-dự-án}/{tên-việc}`; sai thì báo tôi (không tự đổi tên).
-3. `git status --short`: còn thay đổi chưa commit → dừng, đề nghị chạy `/commit` trước. Không stash, không bỏ qua.
-4. `git log main..HEAD --oneline` (sau bước 2 mới chính xác) phải có ít nhất 1 commit, nếu không báo "không có gì để tạo PR".
+1. `git branch --show-current` → remember as `<branch>`. If on `main`/`master` → stop, do not create a PR from the main branch.
+2. The branch name must be `{feature|refactor|fix|chore}/{project-name}/{task-name}`; if wrong, tell the user (do not rename it yourself).
+3. `git status --short`: uncommitted changes remain → stop, suggest running `/commit` first. Do not stash, do not skip.
+4. `git log main..HEAD --oneline` (only accurate after step 2) must show at least 1 commit, otherwise report "nothing to create a PR for".
 5. `git fetch origin --prune`.
 
-## 2. Cập nhật main
+## 2. Update main
 
 ```bash
 git checkout main
 git pull --rebase origin main
 ```
-- `main` local có commit riêng chưa push (khác `origin/main`) → dừng và báo tôi, không tự xử lý.
-- Pull lỗi/conflict → dừng, báo nguyên nhân. Không `--force`, không `reset --hard`.
+- Local `main` has its own unpushed commits (differs from `origin/main`) → stop and tell the user, do not handle it yourself.
+- Pull error/conflict → stop, report the cause. No `--force`, no `reset --hard`.
 
-## 3. Quay lại nhánh làm việc
+## 3. Return to the working branch
 
 ```bash
 git checkout <branch>
 ```
 
-## 4. Rebase nhánh hiện tại lên main (rebase current changes onto main)
+## 4. Rebase the current branch onto main (rebase current changes onto main)
 
-Đang đứng ở `<branch>`, đặt các commit của nhánh này lên trên đầu `main` mới nhất:
+While on `<branch>`, place this branch's commits on top of the latest `main`:
 ```bash
 git rebase main
 ```
-Hướng rebase là **nhánh làm việc → lên main**; không rebase `main` lên nhánh, không merge `main` vào nhánh, không `git pull` vào nhánh làm việc.
-- Có conflict: liệt kê file conflict (`git status`), đọc hai phía và giải quyết **chỉ khi ý định rõ ràng và cả hai phía đều giữ được**; mỗi file xong `git add <file>` rồi `git rebase --continue`. Không rõ ý định → `git rebase --abort`, báo tôi từng file và hai phương án, chờ tôi quyết.
-- Không dùng `-X ours/theirs` hay `--skip` để cho qua.
-- Rebase xong, chạy kiểm tra nhanh nếu project có (`/check` hoặc tối thiểu `flutter analyze` + `flutter test`). Fail do thay đổi từ main → báo tôi trước khi push.
+The rebase direction is **working branch → onto main**; do not rebase `main` onto the branch, do not merge `main` into the branch, do not `git pull` into the working branch.
+- On conflicts: list the conflicted files (`git status`), read both sides and resolve **only when the intent is clear and both sides can be kept**; after each file `git add <file>` then `git rebase --continue`. If the intent is unclear → `git rebase --abort`, report each file and the two options to the user, and wait for their decision.
+- Do not use `-X ours/theirs` or `--skip` to get past conflicts.
+- After the rebase, run a quick check if the project has one (`/check` or at minimum `flutter analyze` + `flutter test`). If it fails due to changes from main → tell the user before pushing.
 
 ## 5. Push
 
-1. Kiểm tra nhánh đã có trên remote chưa: `git ls-remote --heads origin <branch>`.
-   - Chưa có → `git push -u origin <branch>`.
-   - Có và rebase **không đổi** lịch sử đã push (`git status` báo up to date / chỉ ahead) → `git push`.
-   - Có nhưng rebase đã viết lại commit (báo diverged) → cần `git push --force-with-lease origin <branch>`. **Hỏi tôi xác nhận trước** (nêu tên nhánh và số commit sẽ bị ghi đè), chỉ chạy trên nhánh này, không bao giờ trên `main`, không dùng `--force` trần.
-2. Push bị từ chối vì lý do khác → báo tôi, không tự xử lý.
+1. Check whether the branch already exists on the remote: `git ls-remote --heads origin <branch>`.
+   - Not there → `git push -u origin <branch>`.
+   - There, and the rebase did **not change** already-pushed history (`git status` says up to date / only ahead) → `git push`.
+   - There, but the rebase rewrote commits (reports diverged) → needs `git push --force-with-lease origin <branch>`. **Ask the user to confirm first** (state the branch name and the number of commits that will be overwritten), run only on this branch, never on `main`, never bare `--force`.
+2. Push rejected for another reason → tell the user, do not handle it yourself.
 
-## 6. Tạo PR
+## 6. Create the PR
 
-Dùng `gh pr create --base main --head <branch>`; trước đó `gh pr view <branch>` — đã có PR mở thì không tạo mới, chỉ cho tôi link PR đó (đã push thêm commit thì PR tự cập nhật).
+Use `gh pr create --base main --head <branch>`; first run `gh pr view <branch>` — if an open PR already exists, do not create a new one, just give the user that PR's link (pushing more commits updates the PR automatically).
 
-- **Title**: theo format commit — `{type}({tên-dự-án}): {mô tả tiếng Anh}`. Một commit thì lấy chính message đó; nhiều commit thì viết một dòng tổng hợp theo loại nhánh.
-- **Body** (tiếng Anh, ngắn gọn; thêm ghi chú của tôi nếu có):
+- **Title**: in commit format — `{type}({project-name}): {English description}`. For a single commit use that message; for several commits write one summarizing line by branch type.
+- **Body** (English, concise; add the user's notes if any):
   ```
   ## Summary
-  - <các thay đổi chính, 2–5 gạch đầu dòng>
+  - <main changes, 2–5 bullets>
 
   ## Changes
-  - <nhóm theo tầng/feature nếu diff lớn>
+  - <group by layer/feature if the diff is large>
 
   ## Test plan
   - [ ] flutter analyze
   - [ ] flutter test
-  - [ ] <các màn hình/luồng cần test tay>
+  - [ ] <screens/flows to test manually>
   ```
-  Dựa vào `git log main..HEAD` và `git diff main...HEAD --stat`, không bịa thay đổi. Mục nào đã chạy thật trong phiên này thì tick, chưa chạy thì để trống.
-- Không thêm dòng attribution (Co-Authored-By, "Generated with...") vào body, giống quy tắc commit. 
-- Heredoc cho body:
+  Base it on `git log main..HEAD` and `git diff main...HEAD --stat`, do not invent changes. Tick items that were actually run in this session, leave the rest unticked.
+- Do not add attribution lines (Co-Authored-By, "Generated with...") to the body, same as the commit rule.
+- Heredoc for the body:
   ```bash
   gh pr create --base main --head <branch> --title "<title>" --body "$(cat <<'EOF'
   ...
@@ -80,6 +80,6 @@ Dùng `gh pr create --base main --head <branch>`; trước đó `gh pr view <bra
   )"
   ```
 
-## 7. Báo cáo
+## 7. Report
 
-Liệt kê: kết quả pull main (có commit mới không), rebase (số commit, có conflict không, đã giải quyết thế nào), push (thường hay force-with-lease), link PR, và việc cần tôi làm tiếp (reviewer, test tay). Không tự merge PR, không tự gán reviewer.
+List: result of pulling main (any new commits), rebase (number of commits, any conflicts, how they were resolved), push (normal or force-with-lease), PR link, and what the user needs to do next (reviewers, manual testing). Do not merge the PR yourself, do not assign reviewers yourself.

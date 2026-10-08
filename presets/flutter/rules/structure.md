@@ -6,11 +6,11 @@ paths:
 
 # Structure rules
 
-`STRUCTURE.md` là nguồn sự thật về cây thư mục `lib/`. Mọi thay đổi cây thư mục phải cập nhật `STRUCTURE.md` **trong cùng commit**.
+`STRUCTURE.md` is the source of truth for the `lib/` directory tree. Any change to the directory tree must update `STRUCTURE.md` **in the same commit**.
 
-- Cần cập nhật khi: thêm, xóa, đổi tên hoặc di chuyển **folder** trong `lib/`; thêm/xóa/đổi tên file ở mức cấu trúc (file trong `environment/`, `lib/` gốc, lớp cơ sở); đổi vai trò một folder.
-- Không cần khi chỉ thêm/sửa/xóa file thường trong folder đã có (page, notifier, entity, mapper...).
-- Feature mới: dùng đúng 4 folder `pages/ notifiers/ state/ widgets/` (bỏ folder nào không có file); `STRUCTURE.md` chỉ mô tả feature mẫu `<feature>`, không liệt kê từng feature.
-- Folder mới có từ 3 file `.dart` trở lên: thêm `index.dart` (xem `imports.md`).
-- Cập nhật xong chạy `bash .claude/scripts/check_structure.sh` (hoặc `/check`); script báo lệch giữa `STRUCTURE.md` và thư mục thực tế, barrel thiếu, import tương đối, hướng phụ thuộc.
-- Khi đổi cấu trúc ảnh hưởng nhiều project (đổi quy ước chung), cập nhật cả bản mẫu trong `claude-kit/presets/flutter/STRUCTURE.md`.
+- Update when: adding, deleting, renaming or moving a **folder** in `lib/`; adding/deleting/renaming structural-level files (files in `environment/`, the `lib/` root, base classes); changing a folder's role.
+- Not needed when only adding/editing/deleting ordinary files in existing folders (page, notifier, entity, mapper...).
+- New feature: use exactly the 4 folders `pages/ notifiers/ state/ widgets/` (omit any folder with no files); `STRUCTURE.md` only describes the template feature `<feature>`, not each feature.
+- A new folder with 3 or more `.dart` files: add an `index.dart` (see `imports.md`).
+- After updating, run `bash .claude/scripts/check_structure.sh` (or `/check`); the script reports mismatches between `STRUCTURE.md` and the real directories, missing barrels, relative imports, and dependency direction.
+- When a structure change affects many projects (a change to a shared convention), also update the template in `claude-kit/presets/flutter/STRUCTURE.md`.

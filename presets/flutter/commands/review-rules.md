@@ -1,35 +1,35 @@
 ---
-description: Review diff hiện tại theo các rule [manual] của project
-argument-hint: "[branch | file | để trống = git diff hiện tại]"
+description: Review the current diff against the project's [manual] rules
+argument-hint: "[branch | file | empty = current git diff]"
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Read, Grep
 ---
 
-Review thay đổi `$ARGUMENTS` (mặc định: `git diff` + file untracked của branch hiện tại so với `main`). Chỉ đọc, không sửa file.
+Review the changes `$ARGUMENTS` (default: `git diff` plus untracked files of the current branch against `main`). Read-only, never edit files.
 
-Đọc `CLAUDE.md` và `.claude/rules/`, rồi kiểm tra các rule mà `flutter analyze` KHÔNG bắt được:
+Read `CLAUDE.md` and `.claude/rules/`, then check the rules that `flutter analyze` does NOT catch:
 
-**Kiến trúc**
-- Entity không import Model; mapping chỉ ở `RepositoryImpl` qua `XxxMapper.toEntity`; Mapper có `._()` + static.
-- Entity class có hậu tố `Entity`, nằm trong `domain/entities/`.
-- Provider chain `dataSource → repository → useCase → notifier`; notifier không gọi DataSource trực tiếp.
-- Hướng phụ thuộc: `domain` không import `data/`, `share/`, `features/`; `features` không import `data/`; `share` không import `features/`; `data` không import `share/`/`features/`. Chạy `bash .claude/scripts/check_structure.sh`.
-- Domain layer không import Flutter.
-- Chuỗi BE (`toGraphQL`/`fromGraphQL`) chỉ dùng trong `data/`.
-- Đổi cây thư mục → `STRUCTURE.md` đã được cập nhật.
+**Architecture**
+- Entities do not import Models; mapping happens only in `RepositoryImpl` via `XxxMapper.toEntity`; Mappers have `._()` + static methods.
+- Entity classes have the `Entity` suffix and live in `domain/entities/`.
+- Provider chain `dataSource → repository → useCase → notifier`; notifiers do not call DataSources directly.
+- Dependency direction: `domain` does not import `data/`, `share/`, `features/`; `features` does not import `data/`; `share` does not import `features/`; `data` does not import `share/`/`features/`. Run `bash .claude/scripts/check_structure.sh`.
+- The domain layer does not import Flutter.
+- BE strings (`toGraphQL`/`fromGraphQL`) are used only in `data/`.
+- Directory tree changed → `STRUCTURE.md` has been updated.
 
-**Quy ước code**
-- Repository: field `remoteDataSource`, try/catch → `Either`, stream dùng `StreamTransformer.fromHandlers`; không `throw` raw.
-- Thứ tự method: list → batchGet → get → create → update → delete → domain-specific.
+**Code conventions**
+- Repository: field `remoteDataSource`, try/catch → `Either`, streams use `StreamTransformer.fromHandlers`; no raw `throw`.
+- Method order: list → batchGet → get → create → update → delete → domain-specific.
 
 **Presentation**
-- State là `sealed class`, substate dùng `class` thường; UI dùng `switch` exhaustive.
-- Notifier có `_fetch()` riêng; `build()` chỉ gọi nó.
-- Page display-only: không local state cho logic (flag, pagination); chỉ `ConsumerStatefulWidget` khi cần controller/vsync.
-- Biến `ref.watch` không đặt tên chung `state`.
+- State is a `sealed class`, substates use plain `class`; UI uses an exhaustive `switch`.
+- Notifiers have a dedicated `_fetch()`; `build()` only calls it.
+- Pages are display-only: no local state for logic (flags, pagination); use `ConsumerStatefulWidget` only when a controller/vsync is needed.
+- `ref.watch` variables are not given the generic name `state`.
 
-**Khác**
-- Chuỗi hiển thị dùng localization của project, key đủ ở mọi ngôn ngữ hỗ trợ.
-- Thay đổi cần release → `version:` trong `pubspec.yaml` (số BUILD tăng?).
-- Test thiếu cho usecase/mapper/repository/notifier mới (`.claude/rules/tests.md`).
+**Other**
+- Display strings use the project's localization, with keys present in every supported language.
+- Change needs a release → `version:` in `pubspec.yaml` (was the BUILD number bumped?).
+- Missing tests for new usecases/mappers/repositories/notifiers (`.claude/rules/tests.md`).
 
-Output: danh sách vi phạm theo mức độ (cao → thấp), mỗi mục `file:line` + rule vi phạm + gợi ý sửa ngắn. Nếu không có vi phạm, nói rõ là sạch.
+Output: a list of violations ordered by severity (high → low), each as `file:line` + violated rule + short fix suggestion. If there are no violations, say it is clean.

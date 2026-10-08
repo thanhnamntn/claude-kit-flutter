@@ -1,12 +1,12 @@
 # Import & barrel rules
 
-Rule không có `paths:` nên luôn được nạp.
+This rule has no `paths:`, so it is always loaded.
 
-- Mọi folder có từ 3 file `.dart` trở lên phải có `index.dart` (barrel) export toàn bộ file trong folder: `library;` rồi các dòng `export 'xxx.dart';` theo thứ tự alphabet.
-- Folder đã có barrel: import qua `index.dart` thay vì từng file lẻ, để giảm số dòng import:
+- Every folder with 3 or more `.dart` files must have an `index.dart` (barrel) exporting all files in the folder: `library;` then `export 'xxx.dart';` lines in alphabetical order.
+- For folders that have a barrel: import via `index.dart` instead of individual files, to reduce the number of import lines:
   `import 'package:<app>/domain/entities/index.dart';`
-- Khi thêm hoặc xóa file trong folder có barrel, cập nhật `index.dart` cùng lúc.
-- File nằm trong chính folder của barrel thì import file anh em trực tiếp, không import qua `index.dart` của folder mình.
-- Luôn dùng import `package:`; thứ tự import theo `directives_ordering` (chạy `dart fix --apply --code=directives_ordering` nếu cần).
-- Danh sách folder có barrel: liệt kê theo project.
-- Hướng phụ thuộc (không import ngược): `features → domain`; `data → domain`; `core/providers` nối `data` + `domain`; `share → domain/core` (không import `features/`); `domain` không import `data/`, `share/`, `features/`; `features` không import `data/` (lấy dữ liệu qua UseCase/provider); `data` không import `share/`, `features/`.
+- When adding or removing a file in a folder with a barrel, update `index.dart` at the same time.
+- A file inside the barrel's own folder imports sibling files directly, not through its own folder's `index.dart`.
+- Always use `package:` imports; order imports per `directives_ordering` (run `dart fix --apply --code=directives_ordering` if needed).
+- The list of folders with barrels: enumerate per project.
+- Dependency direction (no reverse imports): `features → domain`; `data → domain`; `core/providers` connects `data` + `domain`; `share → domain/core` (does not import `features/`); `domain` does not import `data/`, `share/`, `features/`; `features` does not import `data/` (get data via UseCase/provider); `data` does not import `share/`, `features/`.

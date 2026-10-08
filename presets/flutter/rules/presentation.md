@@ -8,16 +8,16 @@ paths:
 
 # Presentation rules
 
-- Page là display-only: ưu tiên `ConsumerWidget`. Chỉ dùng `ConsumerStatefulWidget` khi cần `AnimationController` (vsync), `TextEditingController` hoặc `ScrollController`.
-- Không khai báo local state cho logic trong Page (fetch flag, pagination index, loading flag) — để ở notifier/state.
-- Tên biến `ref.watch` phải cụ thể theo feature (`homeState`, `ordersState`), không đặt `state` chung chung.
-- State dùng `sealed class`; substate là `class` thường (không `final class`, không cần `const` constructor). UI dùng `switch` exhaustive để compiler báo khi thiếu case.
-- Notifier có `build()` lấy data thì tách logic ra `_fetch()`; `build()` chỉ gọi `_fetch()`. Refresh dùng `state = _fetch()`.
-- Feature không import `data/` (Model, DataSource, GraphQL): dữ liệu đi qua UseCase/provider và là Entity.
-- Notifier không gọi DataSource trực tiếp — đi qua UseCase; xử lý kết quả bằng `fold`.
-- Provider của notifier dùng `NotifierProvider.autoDispose`.
-- Chuỗi hiển thị đi qua localization của project, thêm key ở mọi ngôn ngữ hỗ trợ.
-- Page chỉ chứa UI: không khai báo constant màu/style ở cấp file hay `Color(0x...)` rải trong page/widget. Dùng `AppColors` (`share/theme/app_colors.dart`) và `AppTheme`; màu mới thì thêm vào đó.
-- Widget chỉ một feature dùng đặt ở `features/<feature>/widgets/`; chỉ khi từ 2 feature trở lên dùng mới đưa vào `share/widgets/`. `share/` không chứa model, provider hay logic nghiệp vụ.
-- Feature không import feature khác (ngoại lệ: khung app dùng chung như `shell`, hoặc một helper chung được ghi rõ trong rule của project).
-- Không gọi `.tr()` ở nơi chỉ chạy một lần (route builder, hằng số cấp file, state/notifier lưu sẵn chuỗi) vì đổi ngôn ngữ sẽ không cập nhật. Truyền key và dịch trong `build()`; đổi ngôn ngữ qua một helper dựng lại cả cây widget thay vì chỉ gọi `context.setLocale`.
+- Pages are display-only: prefer `ConsumerWidget`. Use `ConsumerStatefulWidget` only when an `AnimationController` (vsync), `TextEditingController` or `ScrollController` is needed.
+- Do not declare local state for logic in a Page (fetch flag, pagination index, loading flag) — keep it in the notifier/state.
+- `ref.watch` variable names must be feature-specific (`homeState`, `ordersState`), never the generic `state`.
+- State uses `sealed class`; substates are plain `class` (not `final class`, no `const` constructor needed). The UI uses an exhaustive `switch` so the compiler flags missing cases.
+- A Notifier whose `build()` fetches data extracts the logic into `_fetch()`; `build()` only calls `_fetch()`. Refresh uses `state = _fetch()`.
+- Features do not import `data/` (Model, DataSource, GraphQL): data flows through UseCase/provider and is an Entity.
+- Notifiers do not call a DataSource directly — they go through a UseCase; handle results with `fold`.
+- Notifier providers use `NotifierProvider.autoDispose`.
+- Display strings go through the project's localization, with keys added for every supported language.
+- Pages contain UI only: no file-level color/style constants or scattered `Color(0x...)` in pages/widgets. Use `AppColors` (`share/theme/app_colors.dart`) and `AppTheme`; add new colors there.
+- A widget used by only one feature lives in `features/<feature>/widgets/`; move it to `share/widgets/` only when 2 or more features use it. `share/` contains no models, providers or business logic.
+- Features do not import other features (exceptions: a shared app shell such as `shell`, or a common helper explicitly named in the project's rules).
+- Do not call `.tr()` where it runs only once (route builder, file-level constants, state/notifier that stores ready-made strings) because changing the language will not update it. Pass keys and translate in `build()`; change language through a helper that rebuilds the whole widget tree rather than just calling `context.setLocale`.

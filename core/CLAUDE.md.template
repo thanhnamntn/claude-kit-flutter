@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Tổng quan
+## Overview
 
-<!-- 1-2 câu: project làm gì, stack chính. -->
+<!-- 1-2 sentences: what the project does, main stack. -->
 
 ## Commands
 
@@ -12,19 +12,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # build / run
 # format
 # lint / analyze
-# test (toàn bộ)
-# test (1 file / 1 test case)
+# test (all)
+# test (single file / single test case)
 ```
 
-## Kiến trúc
+## Architecture
 
-<!-- Chỉ phần "big picture" cần đọc nhiều file mới hiểu: luồng dữ liệu, phân tầng, quy ước provider/DI. -->
+<!-- Only the "big picture" that takes reading many files to understand: data flow, layering, provider/DI conventions. -->
 
-## Quy tắc
+## Rules
 
-Rule chi tiết nằm trong `.claude/rules/` và tự nạp theo path đang làm việc.
+Detailed rules live in `.claude/rules/` and load automatically based on the path being worked on.
 
 ## Workflow
 
-- Slash commands: `/check`, `/fix-bug <mô tả>`, `/review-rules`.
-- Subagents (`.claude/agents/`): `plan` → `code` → `test` → `review`. Chỉ `code` được sửa source; tối đa 2 vòng sửa lại, sau đó báo người dùng.
+- Slash commands: `/check`, `/fix-bug <description>`, `/review-rules`.
+- Subagents (`.claude/agents/`): `plan` → `code` → `test` → `review`. Only `code` may edit source; at most 2 fix rounds, then report to the user.

@@ -1,17 +1,17 @@
 ---
-description: Format, analyze và test project, báo lỗi gọn
+description: Format, analyze and test the project, report errors concisely
 allowed-tools: Bash(bash .claude/scripts/check_structure.sh:*), Bash(dart format:*), Bash(flutter analyze:*), Bash(flutter test:*)
 ---
 
-Chạy lần lượt từ thư mục gốc project, dừng ở bước đầu tiên fail nghiêm trọng:
+Run in order from the project root, stopping at the first serious failure:
 
-1. `bash .claude/scripts/check_structure.sh` (cấu trúc: barrel, import, hướng phụ thuộc, khớp STRUCTURE.md)
+1. `bash .claude/scripts/check_structure.sh` (structure: barrels, imports, dependency direction, match with STRUCTURE.md)
 2. `dart format .`
 3. `flutter analyze`
 4. `flutter test`
 
-Báo cáo:
-- Mỗi bước: pass/fail.
-- Với lỗi/warning analyze: liệt kê `file:line` + rule (rule trong `analysis_options.yaml`).
-- Với test fail: tên test + message ngắn gọn.
-- Không tự sửa code trừ khi tôi yêu cầu; chỉ đề xuất cách sửa.
+Report:
+- Each step: pass/fail.
+- For analyze errors/warnings: list `file:line` + rule (rules in `analysis_options.yaml`).
+- For failing tests: test name + short message.
+- Do not fix code on your own unless asked; only suggest how to fix.

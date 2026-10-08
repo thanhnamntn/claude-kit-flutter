@@ -1,62 +1,62 @@
 ---
 name: refactor-to-pattern
-description: Refactor một feature/Page/Notifier/State về pattern và cấu trúc chuẩn hiện tại của project — feature gồm pages/notifiers/state/widgets, Page display-only (ConsumerWidget), sealed state, notifier có _fetch() và đi qua UseCase, không import data layer. Dùng khi page có local state cho logic (fetch flag, pagination, loading), state không phải sealed class, page/notifier import thẳng data/ (Model, DataSource), file nằm sai thư mục, page quá dài cần tách widgets, hoặc tôi nói "refactor theo pattern chuẩn".
-argument-hint: "<đường dẫn page hoặc tên feature>"
+description: Refactor a feature/Page/Notifier/State to the project's current standard pattern and structure — a feature consists of pages/notifiers/state/widgets, display-only Pages (ConsumerWidget), sealed state, notifiers with _fetch() that go through a UseCase, no data-layer imports. Use when a page has local state for logic (fetch flag, pagination, loading), state is not a sealed class, a page/notifier imports data/ directly (Model, DataSource), files are in the wrong directory, a page is too long and needs widgets extracted, or the user says "refactor to the standard pattern".
+argument-hint: "<page path or feature name>"
 ---
 
 # Refactor to pattern
 
-Đối tượng: `$ARGUMENTS` (nếu thiếu, hỏi lại). Mẫu chuẩn: tìm một page đã đúng chuẩn trong repo (`ConsumerWidget`, zero local state, `switch` exhaustive) cùng notifier và state của nó, dùng làm mẫu so sánh.
+Target: `$ARGUMENTS` (if missing, ask). Reference: find a page in the repo that already follows the standard (`ConsumerWidget`, zero local state, exhaustive `switch`) along with its notifier and state, and use it as the comparison template.
 
-Đọc trước khi bắt đầu: `.claude/rules/presentation.md`, `.claude/rules/imports.md`, `.claude/rules/structure.md`, và `STRUCTURE.md` (cấu trúc feature chuẩn).
+Read before starting: `.claude/rules/presentation.md`, `.claude/rules/imports.md`, `.claude/rules/structure.md`, and `STRUCTURE.md` (the standard feature structure).
 
-## Cấu trúc chuẩn của một feature
+## Standard structure of a feature
 
 ```
 lib/features/<feature>/
-├── pages/       # Page (UI, display-only)
-├── notifiers/   # NotifierProvider: logic + state transitions
-├── state/       # sealed class state
-└── widgets/     # Widget riêng của feature (bỏ folder nào không có file)
+├── pages/       # Pages (UI, display-only)
+├── notifiers/   # NotifierProviders: logic + state transitions
+├── state/       # sealed class states
+└── widgets/     # Feature-specific widgets (omit any folder with no files)
 ```
-Mỗi folder có từ 3 file `.dart` trở lên có `index.dart`. Feature chỉ lấy dữ liệu qua UseCase/provider và dùng **Entity**; không import `data/` (Model, DataSource, GraphQL).
+Every folder with 3 or more `.dart` files has an `index.dart`. A feature only gets data through UseCase/provider and uses **Entities**; it does not import `data/` (Model, DataSource, GraphQL).
 
-## 1. Audit (chưa sửa gì)
+## 1. Audit (change nothing yet)
 
-Đọc page, notifier, state, widgets của đối tượng, rồi liệt kê vi phạm:
+Read the target's page, notifier, state and widgets, then list the violations:
 
-**Cấu trúc**
-- [ ] File nằm sai thư mục (page ngoài `pages/`, notifier/provider ngoài `notifiers/`, state ngoài `state/`), hoặc có thư mục ngoài `pages/ notifiers/ state/ widgets/`.
-- [ ] Folder ≥ 3 file chưa có `index.dart`, hoặc barrel thiếu export, hoặc còn import tương đối (`../`).
-- [ ] Page dài, chứa nhiều widget con private lớn → tách sang `widgets/`.
+**Structure**
+- [ ] Files in the wrong directory (page outside `pages/`, notifier/provider outside `notifiers/`, state outside `state/`), or directories other than `pages/ notifiers/ state/ widgets/`.
+- [ ] Folders with ≥ 3 files lacking `index.dart`, barrels missing exports, or leftover relative imports (`../`).
+- [ ] A long page containing many large private child widgets → extract to `widgets/`.
 
 **Page**
-- [ ] Là `ConsumerStatefulWidget` nhưng không cần vsync/`TextEditingController`/`ScrollController`.
-- [ ] Có biến local cho logic: `_fetchTriggered`, `_currentPage`, `_isLoading`, pagination flag, `initState` gọi fetch.
-- [ ] Chứa logic nghiệp vụ/format/tính toán/gọi UseCase trực tiếp thay vì để ở notifier hoặc domain.
-- [ ] Biến `ref.watch` đặt tên chung `state`.
-- [ ] Dùng `if`/`is` thay vì `switch` exhaustive trên state.
+- [ ] It is a `ConsumerStatefulWidget` but needs no vsync/`TextEditingController`/`ScrollController`.
+- [ ] Has local variables for logic: `_fetchTriggered`, `_currentPage`, `_isLoading`, pagination flags, `initState` calling fetch.
+- [ ] Contains business logic/formatting/computation/direct UseCase calls instead of leaving them to the notifier or domain.
+- [ ] The `ref.watch` variable is named with the generic `state`.
+- [ ] Uses `if`/`is` instead of an exhaustive `switch` on state.
 
 **State & Notifier**
-- [ ] State không phải `sealed class`, hoặc substate dùng `final class`/`const` constructor.
-- [ ] Notifier có `build()` lấy data nhưng không tách `_fetch()`.
-- [ ] Provider không dùng `NotifierProvider.autoDispose`.
-- [ ] Notifier gọi DataSource/Repository trực tiếp thay vì UseCase.
+- [ ] State is not a `sealed class`, or substates use `final class`/a `const` constructor.
+- [ ] The notifier's `build()` fetches data but does not extract `_fetch()`.
+- [ ] The provider does not use `NotifierProvider.autoDispose`.
+- [ ] The notifier calls a DataSource/Repository directly instead of a UseCase.
 
-**Phụ thuộc tầng**
-- [ ] File trong feature import `package:<tên_package>/data/...` (Model, DataSource, GraphQL, Mapper) → đi qua UseCase/provider, dùng Entity; thiếu Entity/UseCase/provider thì đề xuất tạo theo `/new-feature`.
-- [ ] Dùng chuỗi BE hoặc `toGraphQL()`/`fromGraphQL()` trong feature → dùng enum domain.
-- [ ] Feature import trực tiếp feature khác (trừ `shell`) → chuyển phần dùng chung sang `share/` hoặc domain.
+**Layer dependencies**
+- [ ] A file in the feature imports `package:<package_name>/data/...` (Model, DataSource, GraphQL, Mapper) → go through UseCase/provider and use Entities; if an Entity/UseCase/provider is missing, propose creating it per `/new-feature`.
+- [ ] BE strings or `toGraphQL()`/`fromGraphQL()` used in the feature → use domain enums.
+- [ ] A feature imports another feature directly (except `shell`) → move the shared part to `share/` or domain.
 
-**Giao diện**
-- [ ] Constant màu ở cấp file hoặc `Color(0x...)` trực tiếp → theme/colors của project.
-- [ ] Chuỗi hiển thị hard-code, chưa dùng `.tr()` (key có ở mọi file ngôn ngữ).
+**UI**
+- [ ] File-level color constants or direct `Color(0x...)` → the project's theme/colors.
+- [ ] Hard-coded display strings not using `.tr()` (key present in every language file).
 
-Trình bày danh sách + kế hoạch sửa ngắn gọn, rồi mới làm. Nếu thay đổi ảnh hưởng nhiều feature hoặc đụng domain/data (thêm Entity, UseCase, Mapper), nói rõ phạm vi trước khi làm.
+Present the list + a short fix plan, and only then proceed. If the change affects many features or touches domain/data (adding Entity, UseCase, Mapper), state the scope before starting.
 
 ## 2. Refactor
 
-Làm theo thứ tự state → notifier → page → widgets để mỗi bước compile được.
+Work in the order state → notifier → page → widgets so each step compiles.
 
 **State** (`features/<feature>/state/<feature>_page_state.dart`)
 ```dart
@@ -76,44 +76,44 @@ class XxxPageError extends XxxPageState {
   XxxPageError(this.message);
 }
 ```
-Mọi thứ page đang giữ local (page index, hasMore, isLoadingMore, selection...) chuyển thành field của state `Data` (hoặc substate riêng).
+Anything the page holds locally (page index, hasMore, isLoadingMore, selection...) moves into fields of the `Data` state (or a dedicated substate).
 
 **Notifier** (`features/<feature>/notifiers/<feature>_page_notifier.dart`)
-- `build()` chỉ trả `XxxPageLoading()` rồi gọi `_fetch()` (hoặc `return _fetch()` nếu đồng bộ).
-- Logic lấy data trong `_fetch()`; refresh dùng lại `_fetch()`.
-- Gọi UseCase qua provider (`core/providers`), xử lý bằng `fold`; lỗi → `XxxPageError(failure.message)`.
-- Method public cho page gọi (`fetchAll`, `loadMore`, `retry`...) — page không tự giữ logic.
+- `build()` only returns `XxxPageLoading()` and then calls `_fetch()` (or `return _fetch()` if synchronous).
+- Data-fetching logic lives in `_fetch()`; refresh reuses `_fetch()`.
+- Call UseCases via providers (`core/providers`), handle with `fold`; on error → `XxxPageError(failure.message)`.
+- Public methods for the page to call (`fetchAll`, `loadMore`, `retry`...) — the page holds no logic itself.
 - Provider: `NotifierProvider.autoDispose<XxxPageNotifier, XxxPageState>(XxxPageNotifier.new)`.
 
 **Page** (`features/<feature>/pages/<feature>_page.dart`)
 - `ConsumerWidget`; `final <feature>State = ref.watch(<feature>PageProvider);`
-- `switch (<feature>State)` exhaustive trên mọi substate; không `default`.
-- Hành vi (retry, refresh, load more) gọi `ref.read(provider.notifier).method()`.
-- Nếu còn cần controller thật (scroll/text/animation) mới giữ `ConsumerStatefulWidget`, và chỉ chứa controller, không chứa logic.
+- Exhaustive `switch (<feature>State)` over every substate; no `default`.
+- Behaviors (retry, refresh, load more) call `ref.read(provider.notifier).method()`.
+- Keep `ConsumerStatefulWidget` only if a real controller (scroll/text/animation) is still needed, and it holds only the controller, no logic.
 
 **Widgets** (`features/<feature>/widgets/`)
-- Widget con lớn trong page tách thành file riêng (`xxx_section.dart`...), nhận dữ liệu qua constructor hoặc `ConsumerWidget` đọc provider; không nhân đôi logic.
-- Tạo/cập nhật `index.dart` khi folder đạt 3 file.
+- Large child widgets in the page are extracted to their own files (`xxx_section.dart`...), receiving data via the constructor or as a `ConsumerWidget` reading a provider; do not duplicate logic.
+- Create/update `index.dart` when the folder reaches 3 files.
 
-**Phụ thuộc data** — nếu feature đang dùng Model/DataSource:
-- Thêm Entity (`domain/entities/`), Mapper (`data/mappers/`), UseCase/Params, provider (`core/providers/`) theo `/new-feature`; RepositoryImpl convert Model → Entity.
-- Feature chỉ còn thấy Entity và UseCase.
+**Data dependencies** — if the feature uses Models/DataSources:
+- Add the Entity (`domain/entities/`), Mapper (`data/mappers/`), UseCase/Params, and provider (`core/providers/`) per `/new-feature`; RepositoryImpl converts Model → Entity.
+- The feature then sees only Entities and UseCases.
 
-**Di chuyển file** — dùng `git mv` để giữ lịch sử; sửa import `package:<tên_package>/...` và file routes; cập nhật `index.dart` của folder cũ và mới.
+**Moving files** — use `git mv` to keep history; fix `package:<package_name>/...` imports and the routes file; update the `index.dart` of the old and new folders.
 
-## 3. Kiểm tra
+## 3. Verify
 
-1. `bash .claude/scripts/check_structure.sh` — barrel, import tương đối, hướng phụ thuộc, khớp `STRUCTURE.md`.
+1. `bash .claude/scripts/check_structure.sh` — barrels, relative imports, dependency direction, match with `STRUCTURE.md`.
 2. `dart format .`
-3. `flutter analyze` — không còn lỗi `switch` thiếu case hoặc import hỏng.
-4. `flutter test` — nếu có test notifier/state thì cập nhật; nếu notifier mới có logic (pagination, load more) thì đề xuất thêm test theo `.claude/rules/tests.md`.
+3. `flutter analyze` — no leftover missing-`switch`-case errors or broken imports.
+4. `flutter test` — update notifier/state tests if present; if the new notifier has logic (pagination, load more), propose adding tests per `.claude/rules/tests.md`.
 
-## 4. Báo cáo
+## 4. Report
 
-Liệt kê: vi phạm đã sửa, file đổi/di chuyển, hành vi có thể thay đổi (ví dụ thời điểm fetch, trạng thái loading), và việc còn lại tôi cần quyết định. Không tự thêm tính năng ngoài phạm vi refactor.
+List: violations fixed, files changed/moved, behaviors that may have changed (e.g. fetch timing, loading state), and remaining items the user must decide. Do not add features outside the refactor scope.
 
-## Lưu ý
+## Notes
 
-- Chỉ sửa đối tượng được giao; thấy feature khác lệch rule thì báo lại, không sửa lan.
-- Nếu refactor thêm/xóa/đổi tên folder → cập nhật `STRUCTURE.md` cùng lúc (xem `.claude/rules/structure.md`).
-- Giữ nguyên UI/hành vi nhìn thấy được; đây là refactor cấu trúc, không phải redesign.
+- Only change the assigned target; if you see other features deviating from the rules, report it, do not spread the change.
+- If the refactor adds/deletes/renames folders → update `STRUCTURE.md` at the same time (see `.claude/rules/structure.md`).
+- Preserve the visible UI/behavior; this is a structural refactor, not a redesign.
