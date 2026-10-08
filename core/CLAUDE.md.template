@@ -1,0 +1,30 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Tổng quan
+
+<!-- 1-2 câu: project làm gì, stack chính. -->
+
+## Commands
+
+```bash
+# build / run
+# format
+# lint / analyze
+# test (toàn bộ)
+# test (1 file / 1 test case)
+```
+
+## Kiến trúc
+
+<!-- Chỉ phần "big picture" cần đọc nhiều file mới hiểu: luồng dữ liệu, phân tầng, quy ước provider/DI. -->
+
+## Quy tắc
+
+Rule chi tiết nằm trong `.claude/rules/` và tự nạp theo path đang làm việc.
+
+## Workflow
+
+- Slash commands: `/check`, `/fix-bug <mô tả>`, `/review-rules`.
+- Subagents (`.claude/agents/`): `plan` → `code` → `test` → `review`. Chỉ `code` được sửa source; tối đa 2 vòng sửa lại, sau đó báo người dùng.

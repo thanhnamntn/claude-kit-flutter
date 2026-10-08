@@ -1,0 +1,29 @@
+## Commands
+
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs   # sau khi đổi annotation Riverpod/JSON
+dart format .
+flutter analyze
+flutter test
+flutter test test/path/to/file_test.dart --plain-name "tên test"   # 1 test case
+```
+
+## Kiến trúc
+
+Clean Architecture 3 tầng: `Page → Notifier (Riverpod) → UseCase → Repository interface ←→ Entity → Repository impl → DataSource → Model`, mapping Model → Entity bằng Mapper ở data layer.
+
+- Provider chain: `dataSource → repository → useCase → notifier`.
+- Lỗi dùng `Either<Failure, T>` + `fold()`, không throw raw.
+- State là `sealed class`; Page display-only (`ConsumerWidget`).
+
+## Quy tắc
+
+Rule chi tiết trong `.claude/rules/` (tự nạp theo path): `presentation.md`, `domain-entities.md`, `data-layer.md`, `tests.md`, `imports.md`, `structure.md` (đổi cây thư mục thì cập nhật `STRUCTURE.md` cùng commit), `git.md`.
+
+## Workflow
+
+- Slash commands: `/check`, `/fix-bug <mô tả>`, `/review-rules`, `/new-feature <tên>`.
+- Skills: `commit`, `create-pr`, `refactor-to-pattern`, `check-translations`.
+- Kiểm tra cấu trúc: `bash .claude/scripts/check_structure.sh` (barrel, import tương đối, hướng phụ thuộc, khớp `STRUCTURE.md`).
+- Comment trong code viết bằng tiếng Anh, ngắn gọn, giải thích *vì sao* chứ không lặp lại code.
