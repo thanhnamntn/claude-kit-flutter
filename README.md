@@ -73,7 +73,7 @@ cd claude-kit-flutter
 Bộ `.claude/` dùng lại cho nhiều project: agents, commands, skills, rules. Cài bằng một lệnh, rồi chỉnh vài chỗ riêng của project.
 
 ```
-claude-kit/
+claude-kit-flutter/
 ├── install.sh
 ├── core/                          # không phụ thuộc stack
 │   ├── agents/                    # plan, code, review, test (kết thúc bằng AGENT_STATUS)
