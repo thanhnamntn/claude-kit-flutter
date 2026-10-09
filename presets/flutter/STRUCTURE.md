@@ -32,7 +32,8 @@ lib/
 │   ├── enums/                         # Shared enums
 │   ├── params/                        # Input Params/Requests of UseCases & Repositories (Equatable)
 │   ├── repositories/                  # Repository interfaces (take/return Entities)
-│   └── usecases/                      # UseCase implementations
+│   ├── usecases/                      # UseCase implementations
+│   └── validators/                    # Pure Dart validators (phone, email, date, card...), return bool, no .tr()
 │
 ├── environment/
 │   ├── index.dart                     # Barrel export of the environments
