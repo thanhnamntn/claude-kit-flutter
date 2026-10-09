@@ -9,7 +9,6 @@ lib/
 │   ├── navigation/                    # Navigator key, page route transition
 │   ├── network/                       # API client setup
 │   ├── utils/                         # Pure Dart helpers used by every layer (toTitleCase...)
-│   ├── validators/                    # Shared pure Dart validators (phone, email, date, card); no translation, no Flutter imports
 │   └── providers/                     # Data/domain wiring (split by kind)
 │       ├── datasource/                # <name>_data_source_provider.dart
 │       ├── repository/                # <name>_repository_provider.dart
